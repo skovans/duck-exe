@@ -33,5 +33,3 @@
 | Кукурузное поле | Приморский город | Цифровой мир |
 |---|---|---|
 | ![CORNFIELD.EXE](screenshots/cornfield.png) | ![SEAGULL CITY](screenshots/seagull-city.png) | ![THE INFINITE SCROLL](screenshots/infinite-scroll.png) |
-
-ые эффекты оригинальные и сгенерированы кодом проекта. Ассеты Nintendo, чужие мелодии и внешние изображения не используются. Код проекта распространяется под MIT License. Phaser распространяется по собственной лицензии MIT, входящей в зависимость npm.
