@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#201a3d" />
+    <meta name="description" content="A tiny pixel-art duck versus seagulls, corn, and the infinite scroll. A free three-level browser game." />
+    <title>DUCK.EXE — No More Scrolling</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="outer">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span> <span>DUCK<span class="brand-dot">.</span>EXE</span></div>
+        <span class="topbar-center">THE CUTEST INTERNET ESCAPE</span>
+        <span class="topbar-tag"><span class="live-pulse"></span> ORIGINAL PIXEL ADVENTURE</span>
+      </header>
+      <main>
+        <div class="eyebrow"><span class="eyebrow-star">✳</span> A LITTLE GAME ABOUT BIG DISTRACTIONS <span class="eyebrow-star">✳</span></div>
+        <div id="game-frame" class="game-frame">
+          <div id="phaser-host" class="game-canvas" aria-label="Pixel-art platformer game with a white duck"></div>
+          <div class="hud" id="hud" hidden>
+            <div class="hud-left"><span class="hud-pill"><span class="hud-label">LIVES</span><span id="hud-lives" class="lives">♥ ♥ ♥</span></span><span class="hud-pill"><span class="hud-label">CORN</span><span id="hud-score" class="hud-number">0000</span></span></div>
+            <div class="hud-right"><span class="hud-pill hud-level" id="hud-level">01 / 03</span><button type="button" id="pause-button" class="hud-button" aria-label="Pause game">Ⅱ</button><button type="button" id="sound-button" class="hud-button" aria-label="Toggle game audio">♪</button></div>
+          </div>
+          <div id="toast" class="game-toast" aria-live="polite"></div>
+          <div id="overlay" class="overlay" role="dialog" aria-modal="false"></div>
+        </div>
+        <div class="touch-controls" id="touch-controls" aria-label="Touch game controls">
+          <div class="touch-arrows"><button type="button" class="touch-btn" data-control="left" aria-label="Move left">◀</button><button type="button" class="touch-btn" data-control="right" aria-label="Move right">▶</button></div>
+          <button type="button" class="touch-btn touch-jump" data-control="jump" aria-label="Jump">↑ <span>JUMP</span></button>
+        </div>
+        <section class="below">
+          <div class="below-header"><span class="section-prefix">// QUICK GUIDE</span><span class="tiny-asterisk">DON'T LET THE FEED WIN.</span></div>
+          <div class="guide-grid">
+            <div class="guide-block"><div class="guide-icon">← →</div><div><strong>MOVE</strong><p>A / D or arrow keys</p></div></div>
+            <div class="guide-block"><div class="guide-icon">↑</div><div><strong>JUMP</strong><p>Space / W / up arrow</p></div></div>
+            <div class="guide-block"><div class="guide-icon guide-corn">✦</div><div><strong>COLLECT</strong><p>Golden corn = +10 points</p></div></div>
+            <div class="guide-block"><div class="guide-icon guide-heart">♥</div><div><strong>SURVIVE</strong><p>Three lives. No doomscrolling.</p></div></div>
+          </div>
+          <div class="level-strip"><span>3 HANDCRAFTED LEVELS</span><span class="level-progress-dots" aria-hidden="true">● — ● — ●</span><span>MADE FOR SHORT ATTENTION SPANS</span></div>
+        </section>
+      </main>
+      <footer class="footer"><span>DUCK.EXE © 2026 • MADE WITH A LOT OF CORN</span><span>NO TRACKERS. NO ADS. JUST QUACKS.</span></footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

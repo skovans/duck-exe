@@ -1,0 +1,1372 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#201a3d" />
+    <meta name="description" content="A tiny pixel-art duck versus seagulls, corn, and the infinite scroll. A free three-level browser game." />
+    <title>DUCK.EXE — No More Scrolling</title>
+    
+  <style>
+:root {
+  font-family: 'Trebuchet MS', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  color: #fbf4ed;
+  background: #17132d;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  --ink: #251c42;
+  --mint: #91f7cb;
+  --pink: #ff9bce;
+  --gold: #ffda72;
+}
+* { box-sizing: border-box; }
+html { min-height: 100%; }
+body { margin: 0; min-width: 310px; min-height: 100vh; overflow-x: hidden; background: radial-gradient(ellipse at 8% 4%, #47316d 0%, transparent 35%), radial-gradient(ellipse at 92% 68%, #49315b 0%, transparent 33%), #17132d; }
+button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible { outline: 3px solid #ffe29f; outline-offset: 4px; }
+.outer { width: min(1240px, calc(100% - 56px)); margin: 0 auto; }
+.topbar { height: 77px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.brand { font-family: 'Courier New', ui-monospace, monospace; font-size: 21px; font-weight: 900; letter-spacing: -1.8px; display: inline-flex; align-items: center; white-space: nowrap; }
+.brand-mark { font-family: sans-serif; display: inline-grid; place-items: center; color: #2d2544; background: #a4f7d5; border: 3px solid #40365c; width: 33px; height: 33px; margin-right: 9px; font-size: 18px; border-radius: 8px; box-shadow: 3px 3px 0 #080b1f; }
+.brand-dot { color: #ff96bb; }
+.topbar-center,.topbar-tag,.eyebrow,.section-prefix,.tiny-asterisk,.level-strip,.footer { font-family: 'Courier New', ui-monospace, monospace; font-weight: 800; letter-spacing: 1.25px; }
+.topbar-center { font-size: 10px; color: #998dad; }
+.topbar-tag { color: #d2fce9; border: 1px solid #4e4a67; border-radius: 100px; padding: 9px 12px; font-size: 9px; display: flex; align-items: center; gap: 7px; }
+.live-pulse { width: 7px; height: 7px; background: #92f9c3; border-radius: 50%; box-shadow: 0 0 10px #92f9c3; }
+.eyebrow { padding: 9px 0 17px; font-size: 10px; color: #d0bfd7; text-align: center; }
+.eyebrow-star { color: #ffc871; font-size: 17px; vertical-align: -2px; margin: 0 12px; }
+.game-frame { position: relative; width: 100%; aspect-ratio: 16/9; border: 6px solid #3d2d58; background: #a8dfea; border-radius: 19px; overflow: hidden; box-shadow: 0 0 0 2px #75538a, 0 22px 0 -8px #0c0a1d, 0 36px 52px #0908158c, inset 0 0 0 2px #ffffff2a; isolation: isolate; }
+.game-canvas { position: absolute; inset: 0; overflow: hidden; }
+.game-canvas canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+.hud { position: absolute; z-index: 5; inset: 16px 18px auto; display: flex; align-items: start; justify-content: space-between; pointer-events: none; gap: 15px; }
+.hud[hidden] { display: none; }
+.hud-left,.hud-right { display: flex; align-items: center; gap: 9px; }
+.hud-pill { display: inline-flex; align-items: center; gap: 9px; border: 2px solid #2f294b; box-shadow: 0 4px 0 #261f47a9; background: #fff6eae9; border-radius: 9px; color: #332a52; min-height: 38px; padding: 6px 12px; font-family: 'Courier New', monospace; font-weight: 900; }
+.hud-label { font-size: 10px; opacity: .62; letter-spacing: .3px; }
+.lives { font-size: 18px; color: #ff6a92; white-space: nowrap; letter-spacing: -3px; }
+.hud-number { color: #7355a9; font-size: 18px; letter-spacing: 1px; }
+.hud-level { font-size: 13px; letter-spacing: 1px; }
+.hud-button { pointer-events: auto; width: 39px; height: 38px; display: grid; place-items: center; color: #312749; background: #fff6eae9; border: 2px solid #2f294b; border-radius: 8px; box-shadow: 0 4px 0 #261f47a9; font-weight: 900; font-size: 20px; line-height: 1; }
+.hud-button:hover { transform: translateY(-1px); background: #fce6ff; }
+.overlay { position: absolute; inset: 0; z-index: 8; display: flex; align-items: center; background: linear-gradient(90deg, rgba(27, 20, 57, .98) 0%, rgba(35, 25, 72, .94) 38%, rgba(42, 26, 65, .46) 66%, transparent 100%); }
+.overlay.hidden { display: none; }
+.overlay.menu-mode:before { content: ''; position: absolute; inset: 0; opacity: .65; pointer-events: none; background: radial-gradient(circle at 68% 67%, transparent 0 18%, #261b4300 31%, #211a46a1 100%); }
+.overlay-body { z-index: 1; position: relative; padding: 25px clamp(18px, 5.3%, 75px); width: 64%; max-width: 790px; }
+.pill-tag { display: inline-block; color: #241d41; border: 2px solid #191c31; background: var(--mint); box-shadow: 4px 4px 0 #100d25; border-radius: 3px; padding: 7px 11px; font-family: 'Courier New', monospace; font-size: clamp(9px, .86vw, 12px); font-weight: 900; letter-spacing: .9px; transform: rotate(-2deg); }
+.big-title { margin: 21px 0 5px; font-family: 'Courier New', ui-monospace, monospace; font-weight: 900; font-size: clamp(42px, 7.6vw, 103px); line-height: .87; letter-spacing: -8px; color: #fff8ed; text-shadow: 5px 5px 0 #6d4b91, 9px 9px 0 #21153c; white-space: nowrap; }
+.big-title .period { color: #ffc884; }
+.big-title .suffix { color: #ff9ed0; }
+.main-subtitle { font-family: 'Courier New', ui-monospace, monospace; color: #98edcd; font-weight: 900; font-size: clamp(14px, 1.8vw, 24px); letter-spacing: 2.5px; margin: 22px 0 12px; }
+.menu-description { max-width: 410px; color: #ded2e8; font-size: clamp(12px, 1.15vw, 15px); line-height: 1.68; margin: 0 0 23px; }
+.primary-button, .secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: 13px; border-radius: 8px; padding: 15px 22px; font-family: 'Courier New', monospace; font-weight: 900; letter-spacing: .7px; font-size: clamp(12px, 1.15vw, 16px); white-space: nowrap; transition: transform .1s ease, box-shadow .1s ease; }
+.primary-button { color: #292042; background: #ffcf77; border: 2px solid #ffe2a8; box-shadow: 0 6px 0 #b87868, 0 11px 20px #13092570; }
+.primary-button:hover { background: #ffdc96; transform: translateY(-2px); box-shadow: 0 8px 0 #b87868, 0 14px 24px #13092570; }
+.primary-button:active, .secondary-button:active { transform: translateY(4px); box-shadow: none; }
+.secondary-button { color: #fff6e7; background: #4a3b75; border: 2px solid #8a70b1; box-shadow: 0 6px 0 #2b1e4b; }
+.secondary-button:hover { background: #5a4c85; }
+.menu-meta { margin-top: 20px; display: flex; gap: 15px; align-items: center; font-size: 10px; font-family: 'Courier New', monospace; font-weight: 800; color: #e1cddd; letter-spacing: 1px; }
+.menu-meta span { display: flex; gap: 5px; align-items: center; }
+.menu-meta em { font-style: normal; color: #92f6d0; }
+.level-buttons { margin-top: 19px; display: flex; flex-wrap: wrap; gap: 7px; }
+.level-buttons button { border-radius: 6px; padding: 7px 10px; color: #f9e8f7; font-size: 10px; border: 1px solid #79638c; background: #3e3265c9; font-family: 'Courier New', monospace; font-weight: 900; }
+.level-buttons button:disabled { color: #a093b6; opacity: .6; cursor: not-allowed; }
+.level-buttons button:not(:disabled):hover { background: #6d5598; }
+.overlay.center-mode { justify-content: center; text-align: center; background: #1e173fc9; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+.center-card { width: min(540px, 85%); background: #302650ed; padding: clamp(17px, 4vw, 45px); border: 3px solid #ba8bc9; border-radius: 16px; box-shadow: 8px 10px 0 #18112f, 0 20px 65px #130d2cab; }
+.result-eyebrow { font-size: 11px; letter-spacing: 2px; font-family: 'Courier New', monospace; font-weight: 900; color: #9bf3c7; }
+.result-title { margin: 14px 0; color: #fff6e9; font-family: 'Courier New', monospace; font-size: clamp(23px, 4vw, 47px); line-height: 1.07; letter-spacing: -2.5px; text-shadow: 4px 4px #674c90; }
+.result-title.pink { color: #ffadd2; }
+.result-message { margin: 12px auto 21px; line-height: 1.55; font-size: 14px; max-width: 400px; color: #f2dbed; }
+.result-stats { display: flex; justify-content: center; gap: 13px; margin: 16px 0 21px; font-family: 'Courier New', monospace; font-size: 11px; font-weight: 900; flex-wrap: wrap; }
+.result-stats span { padding: 10px 13px; background: #443664; border-radius: 5px; border: 1px solid #736391; }
+.result-stats strong { color: #ffdd87; font-size: 16px; }
+.result-actions { display: flex; gap: 11px; flex-wrap: wrap; justify-content: center; }
+.game-toast { position: absolute; top: 21%; left: 50%; z-index: 7; pointer-events: none; opacity: 0; transform: translate(-50%, -8px) scale(.95); padding: 10px 17px; background: #332750ee; color: #fff8e6; border: 2px solid #ffdd94; border-radius: 5px; box-shadow: 4px 4px 0 #170e38; font-family: 'Courier New', monospace; font-weight: 900; font-size: clamp(9px, 1.35vw, 16px); text-align: center; white-space: nowrap; letter-spacing: .8px; transition: opacity .18s ease, transform .18s ease; }
+.game-toast.visible { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.below { margin-top: 44px; }
+.below-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #584770; }
+.section-prefix { color: #aaf7d1; font-size: 12px; }
+.tiny-asterisk { color: #a998bd; font-size: 10px; }
+.guide-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; padding: 19px 0 25px; }
+.guide-block { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.guide-icon { flex: none; font-family: 'Courier New', monospace; font-size: 20px; font-weight: 900; color: #c3bcfa; width: 54px; height: 50px; border: 2px solid #584a79; border-radius: 9px; display: grid; place-items: center; background: #322849; box-shadow: 0 4px 0 #0d0b21; }
+.guide-icon.guide-corn { color: #ffd67c; }
+.guide-icon.guide-heart { color: #ff91b7; }
+.guide-block strong { font-family: 'Courier New', monospace; font-size: 12px; letter-spacing: .3px; }
+.guide-block p { margin: 4px 0 0; color: #aa9dbb; font-size: 11px; line-height: 1.5; }
+.level-strip { border-top: 1px solid #584770; border-bottom: 1px solid #584770; padding: 16px 0; display: flex; justify-content: space-between; align-items: center; color: #b7a4c1; font-size: 10px; }
+.level-progress-dots { color: #ffd283; letter-spacing: 3px; font-size: 14px; }
+.footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 30px 0 32px; font-size: 9px; color: #7c7196; }
+.touch-controls { display: none; }
+@media (max-width: 1100px) {
+  .topbar-center { display: none; }
+  .outer { width: min(100% - 35px, 1240px); }
+  .big-title { letter-spacing: -5px; }
+  .overlay-body { width: 70%; }
+  .guide-grid { gap: 9px; }
+  .guide-block { gap: 8px; }
+  .guide-icon { width: 45px; height: 47px; }
+}
+@media (max-width: 760px) {
+  .outer { width: calc(100% - 20px); }
+  .topbar { height: 60px; }
+  .brand { font-size: 18px; }
+  .brand-mark { width: 27px; height: 27px; font-size: 16px; }
+  .topbar-tag { font-size: 8px; letter-spacing: .2px; padding: 7px 8px; }
+  .eyebrow { padding: 8px 0 13px; font-size: 8px; letter-spacing: .4px; }
+  .eyebrow-star { margin: 0 3px; }
+  .game-frame { border-width: 3px; border-radius: 12px; }
+  .overlay-body { width: 78%; padding: 10px 22px; }
+  .big-title { margin-top: 12px; font-size: clamp(30px, 9vw, 68px); letter-spacing: -3px; text-shadow: 3px 3px #6d4b91; }
+  .pill-tag { font-size: 7px; padding: 4px 6px; box-shadow: 2px 2px #100d25; }
+  .main-subtitle { margin: 11px 0 7px; font-size: clamp(9px, 2.4vw, 16px); letter-spacing: 1px; }
+  .menu-description { font-size: 9px; line-height: 1.35; margin-bottom: 12px; max-width: 270px; }
+  .primary-button,.secondary-button { padding: 8px 13px; font-size: 10px; border-radius: 5px; box-shadow: 0 3px 0 #b87868; }
+  .menu-meta { display: none; }
+  .level-buttons { margin-top: 9px; gap: 4px; }
+  .level-buttons button { font-size: 7px; padding: 4px 5px; }
+  .hud { inset: 6px 6px auto; gap: 4px; }
+  .hud-left,.hud-right { gap: 3px; }
+  .hud-pill { padding: 3px 5px; min-height: 23px; gap: 4px; border-width: 1px; border-radius: 4px; box-shadow: 0 2px #261f47a9; }
+  .hud-label { font-size: 7px; }
+  .lives { font-size: 10px; letter-spacing: -2px; }
+  .hud-number { font-size: 11px; }
+  .hud-level { font-size: 9px; }
+  .hud-button { width: 24px; height: 23px; border-width: 1px; border-radius: 3px; font-size: 14px; box-shadow: 0 2px #261f47a9; }
+  .center-card { padding: 13px; width: min(440px, 86%); border-width: 2px; }
+  .result-eyebrow { font-size: 8px; }
+  .result-title { font-size: 18px; letter-spacing: -1px; margin: 7px 0; text-shadow: 2px 2px #674c90; }
+  .result-message { font-size: 10px; line-height: 1.3; margin: 4px auto 9px; }
+  .result-stats { gap: 5px; margin: 5px 0 10px; }
+  .result-stats span { font-size: 8px; padding: 5px; }
+  .result-stats strong { font-size: 10px; }
+  .game-toast { border-width: 1px; top: 19%; padding: 5px 7px; font-size: 9px; }
+  .below { margin-top: 24px; }
+  .guide-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+  .tiny-asterisk { display: none; }
+  .level-strip { font-size: 8px; letter-spacing: .1px; gap: 6px; }
+  .level-progress-dots { font-size: 10px; letter-spacing: 0; }
+  .footer { padding: 24px 0; flex-wrap: wrap; font-size: 8px; gap: 8px; }
+}
+@media (pointer: coarse), (max-width: 700px) {
+  .touch-controls { display: flex; justify-content: space-between; margin: 16px auto 0; max-width: 620px; padding: 0 7px; }
+  .touch-arrows { display: flex; gap: 13px; }
+  .touch-btn { display: inline-flex; justify-content: center; align-items: center; gap: 8px; width: 67px; height: 59px; background: #423357; color: #f8e1ff; font-size: 24px; border: 2px solid #9475ae; border-bottom-width: 5px; box-shadow: 0 4px #111024; border-radius: 12px; touch-action: none; user-select: none; }
+  .touch-btn.pressed, .touch-btn:active { transform: translateY(3px); box-shadow: none; background: #705587; }
+  .touch-jump { width: 122px; color: #271f45; background: #ffcf82; border-color: #ffe3a7; border-bottom-color: #b37a67; font-weight: 900; }
+  .touch-jump span { font-family: 'Courier New', monospace; font-size: 14px; }
+  .touch-jump.pressed { background: #ffe29f; }
+}
+@media (max-width: 410px) {
+  .brand { font-size: 16px; }
+  .topbar-tag { font-size: 7px; }
+  .overlay-body { padding-left: 13px; width: 84%; }
+  .menu-description { margin: 5px 0 8px; font-size: 8px; }
+  .main-subtitle { margin: 7px 0 5px; }
+  .pill-tag { font-size: 6px; }
+  .level-buttons { display: none; }
+  .result-message { display: none; }
+  .result-stats { display: none; }
+  .guide-block p { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+</style></head>
+  <body>
+    <div class="outer">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span> <span>DUCK<span class="brand-dot">.</span>EXE</span></div>
+        <span class="topbar-center">THE CUTEST INTERNET ESCAPE</span>
+        <span class="topbar-tag"><span class="live-pulse"></span> ORIGINAL PIXEL ADVENTURE</span>
+      </header>
+      <main>
+        <div class="eyebrow"><span class="eyebrow-star">✳</span> A LITTLE GAME ABOUT BIG DISTRACTIONS <span class="eyebrow-star">✳</span></div>
+        <div id="game-frame" class="game-frame">
+          <div id="phaser-host" class="game-canvas" aria-label="Pixel-art platformer game with a white duck"></div>
+          <div class="hud" id="hud" hidden>
+            <div class="hud-left"><span class="hud-pill"><span class="hud-label">LIVES</span><span id="hud-lives" class="lives">♥ ♥ ♥</span></span><span class="hud-pill"><span class="hud-label">CORN</span><span id="hud-score" class="hud-number">0000</span></span></div>
+            <div class="hud-right"><span class="hud-pill hud-level" id="hud-level">01 / 03</span><button type="button" id="pause-button" class="hud-button" aria-label="Pause game">Ⅱ</button><button type="button" id="sound-button" class="hud-button" aria-label="Toggle game audio">♪</button></div>
+          </div>
+          <div id="toast" class="game-toast" aria-live="polite"></div>
+          <div id="overlay" class="overlay" role="dialog" aria-modal="false"></div>
+        </div>
+        <div class="touch-controls" id="touch-controls" aria-label="Touch game controls">
+          <div class="touch-arrows"><button type="button" class="touch-btn" data-control="left" aria-label="Move left">◀</button><button type="button" class="touch-btn" data-control="right" aria-label="Move right">▶</button></div>
+          <button type="button" class="touch-btn touch-jump" data-control="jump" aria-label="Jump">↑ <span>JUMP</span></button>
+        </div>
+        <section class="below">
+          <div class="below-header"><span class="section-prefix">// QUICK GUIDE</span><span class="tiny-asterisk">DON'T LET THE FEED WIN.</span></div>
+          <div class="guide-grid">
+            <div class="guide-block"><div class="guide-icon">← →</div><div><strong>MOVE</strong><p>A / D or arrow keys</p></div></div>
+            <div class="guide-block"><div class="guide-icon">↑</div><div><strong>JUMP</strong><p>Space / W / up arrow</p></div></div>
+            <div class="guide-block"><div class="guide-icon guide-corn">✦</div><div><strong>COLLECT</strong><p>Golden corn = +10 points</p></div></div>
+            <div class="guide-block"><div class="guide-icon guide-heart">♥</div><div><strong>SURVIVE</strong><p>Three lives. No doomscrolling.</p></div></div>
+          </div>
+          <div class="level-strip"><span>3 HANDCRAFTED LEVELS</span><span class="level-progress-dots" aria-hidden="true">● — ● — ●</span><span>MADE FOR SHORT ATTENTION SPANS</span></div>
+        </section>
+      </main>
+      <footer class="footer"><span>DUCK.EXE © 2026 • MADE WITH A LOT OF CORN</span><span>NO TRACKERS. NO ADS. JUST QUACKS.</span></footer>
+    </div>
+    <script>
+const VIEW_WIDTH = 960;
+const VIEW_HEIGHT = 540;
+const GROUND_Y = 448;
+function goldLine(start, count, step = 46, y = GROUND_Y - 58) {
+    return Array.from({ length: count }, (_, i) => ({ x: start + i * step, y }));
+}
+function goldArch(x, top, step = 41) {
+    return Array.from({ length: 7 }, (_, i) => ({
+        x: x + i * step,
+        y: top + Math.abs(i - 3) * 12,
+    }));
+}
+function kern(...lines) { return lines.flat(); }
+const LEVELS = [
+    {
+        id: 1,
+        name: 'CORNFIELD.EXE',
+        title: 'JUST KEEP QUACKING',
+        subtitle: 'Big jumps. Little legs. Infinite corn.',
+        theme: 'field',
+        length: 5000,
+        ground: [[0, 5000]],
+        platforms: [
+            { x: 780, y: 322, width: 220 },
+            { x: 1070, y: 276, width: 180 },
+            { x: 1640, y: 305, width: 255 },
+            { x: 2010, y: 354, width: 150 },
+            { x: 2890, y: 298, width: 260 },
+            { x: 3230, y: 350, width: 160 },
+            { x: 3980, y: 310, width: 240 },
+            { x: 4340, y: 266, width: 210 },
+        ],
+        springs: [{ x: 610, y: GROUND_Y - 21 }, { x: 1490, y: GROUND_Y - 21 }, { x: 2770, y: GROUND_Y - 21 }, { x: 3880, y: GROUND_Y - 21 }],
+        kernels: kern(goldLine(220, 7), goldArch(645, 235), goldLine(790, 4, 47, 279), goldLine(1090, 3, 46, 230), goldLine(1220, 5), goldArch(1495, 232), goldLine(1650, 5, 44, 264), goldLine(2130, 8), goldLine(2390, 5, 46, 371), goldArch(2790, 231), goldLine(2900, 5, 48, 254), goldLine(3380, 7), goldArch(3860, 235), goldLine(4000, 5, 43, 266), goldLine(4370, 4, 47, 224), goldLine(4620, 5)),
+        badKernels: [{ x: 485, y: 414 }, { x: 1270, y: 414 }, { x: 2240, y: 414 }, { x: 2670, y: 414 }, { x: 3670, y: 414 }, { x: 4590, y: 414 }],
+        bollards: [], gulls: [],
+        bonuses: [{ x: 3420, y: 403, kind: 'heart' }],
+        portals: [],
+        checkpoints: [1770, 3490],
+        signs: [{ x: 180, text: 'NO THOUGHTS, JUST QUACK' }, { x: 2130, text: "IT'S GIVING CORN" }, { x: 3720, text: 'PLOT ARMOR ACTIVATED' }],
+        finish: 4810,
+        success: 'MAIN CHARACTER ENERGY!',
+    },
+    {
+        id: 2,
+        name: 'SEAGULL CITY',
+        title: 'POV: THE SEAGULLS WANT YOUR SNACKS',
+        subtitle: 'Trust no bird. Especially the loud ones.',
+        theme: 'coast',
+        length: 5840,
+        ground: [[0, 5840]],
+        platforms: [
+            { x: 680, y: 337, width: 185 }, { x: 1440, y: 302, width: 230 },
+            { x: 2090, y: 334, width: 190 }, { x: 2820, y: 291, width: 240 },
+            { x: 3510, y: 324, width: 190 }, { x: 4150, y: 279, width: 225 },
+            { x: 4880, y: 315, width: 195 },
+        ],
+        springs: [{ x: 535, y: GROUND_Y - 21 }, { x: 1320, y: GROUND_Y - 21 }, { x: 2710, y: GROUND_Y - 21 }, { x: 4020, y: GROUND_Y - 21 }],
+        kernels: kern(goldLine(190, 7), goldArch(540, 250), goldLine(700, 3, 47, 291), goldLine(930, 7), goldArch(1305, 230), goldLine(1450, 5, 43, 257), goldLine(1850, 7), goldLine(2100, 4, 43, 294), goldLine(2420, 5), goldArch(2715, 205), goldLine(2830, 5, 46, 245), goldLine(3150, 6), goldLine(3530, 4, 43, 280), goldArch(4020, 216), goldLine(4180, 4, 47, 235), goldLine(4540, 7), goldLine(4900, 4, 43, 266), goldLine(5250, 9)),
+        badKernels: [{ x: 480, y: 413 }, { x: 1180, y: 414 }, { x: 1930, y: 414 }, { x: 2560, y: 413 }, { x: 3390, y: 414 }, { x: 3910, y: 414 }, { x: 4660, y: 414 }, { x: 5390, y: 414 }],
+        bollards: [{ x: 830, y: 420 }, { x: 1730, y: 420 }, { x: 2370, y: 420 }, { x: 3210, y: 420 }, { x: 3800, y: 420 }, { x: 4690, y: 420 }, { x: 5360, y: 420 }],
+        gulls: [
+            { x: 1040, y: 390, span: 90, altitude: 15, speed: 1.4 },
+            { x: 1880, y: 373, span: 102, altitude: 21, speed: 1.3 },
+            { x: 2610, y: 368, span: 75, altitude: 26, speed: 1.7 },
+            { x: 3380, y: 382, span: 94, altitude: 20, speed: 1.2 },
+            { x: 4430, y: 380, span: 95, altitude: 23, speed: 1.65 },
+            { x: 5110, y: 370, span: 95, altitude: 16, speed: 1.5 },
+        ],
+        bonuses: [
+            { x: 1960, y: 414, kind: 'grass' },
+            { x: 2920, y: 245, kind: 'lore' },
+            { x: 3700, y: 396, kind: 'focus' },
+            { x: 5050, y: 396, kind: 'heart' },
+        ],
+        portals: [],
+        checkpoints: [1990, 4020],
+        signs: [{ x: 230, text: '404: MOTIVATION NOT FOUND' }, { x: 2720, text: 'SKILL ISSUE?' }, { x: 4590, text: 'BEWARE: SNACK THIEVES' }],
+        finish: 5620,
+        success: 'NOT AN NPC ANYMORE!',
+    },
+    {
+        id: 3,
+        name: 'THE INFINITE SCROLL',
+        title: 'ESCAPE THE ALGORITHM',
+        subtitle: 'One last scroll could cost everything.',
+        theme: 'neon',
+        length: 6900,
+        ground: [[0, 1000], [1125, 1880], [2015, 2775], [2915, 3790], [3925, 4710], [4850, 5540], [5680, 6900]],
+        platforms: [
+            { x: 710, y: 328, width: 195 },
+            { x: 1410, y: 315, width: 220 },
+            { x: 1810, y: 344, width: 180 },
+            { x: 2380, y: 292, width: 240 },
+            { x: 3320, y: 320, width: 175 },
+            { x: 3640, y: 280, width: 175 },
+            { x: 4320, y: 310, width: 200 },
+            { x: 5150, y: 288, width: 230 },
+            { x: 5910, y: 339, width: 175 },
+        ],
+        springs: [{ x: 555, y: GROUND_Y - 21 }, { x: 1790, y: GROUND_Y - 21 }, { x: 2240, y: GROUND_Y - 21 }, { x: 3540, y: GROUND_Y - 21 }, { x: 4510, y: GROUND_Y - 21 }, { x: 5400, y: GROUND_Y - 21 }],
+        kernels: kern(goldLine(170, 7), goldArch(565, 225), goldLine(740, 3, 44, 283), goldLine(1160, 7), goldLine(1410, 4, 44, 273), goldArch(1760, 238), goldLine(2070, 5), goldArch(2265, 215), goldLine(2400, 4, 46, 247), goldLine(2990, 7), goldLine(3320, 4, 44, 275), goldArch(3530, 207), goldLine(3980, 7), goldLine(4350, 4, 46, 265), goldArch(4500, 217), goldLine(4900, 5), goldLine(5170, 4, 45, 244), goldArch(5400, 210), goldLine(5740, 6), goldLine(5990, 4, 46, 292), goldLine(6590, 3)),
+        badKernels: [{ x: 430, y: 413 }, { x: 1325, y: 413 }, { x: 1730, y: 413 }, { x: 2150, y: 413 }, { x: 3060, y: 413 }, { x: 3470, y: 413 }, { x: 4200, y: 413 }, { x: 5040, y: 413 }, { x: 5840, y: 413 }, { x: 6325, y: 413 }],
+        bollards: [{ x: 840, y: 420 }, { x: 1660, y: 420 }, { x: 2600, y: 420 }, { x: 3420, y: 420 }, { x: 4260, y: 420 }, { x: 5220, y: 420 }, { x: 6090, y: 420 }],
+        gulls: [
+            { x: 1230, y: 365, span: 75, altitude: 19, speed: 1.4 },
+            { x: 2185, y: 379, span: 80, altitude: 18, speed: 1.7 },
+            { x: 3150, y: 366, span: 95, altitude: 24, speed: 1.5 },
+            { x: 4100, y: 381, span: 60, altitude: 20, speed: 1.65 },
+            { x: 5000, y: 370, span: 80, altitude: 21, speed: 1.3 },
+            { x: 5890, y: 375, span: 82, altitude: 21, speed: 1.8 },
+        ],
+        bonuses: [
+            { x: 1475, y: 270, kind: 'lore' },
+            { x: 3090, y: 393, kind: 'focus' },
+            { x: 4420, y: 263, kind: 'heart' },
+            { x: 5840, y: 403, kind: 'grass' },
+        ],
+        portals: [
+            { x: 910, y: 387, destination: 1195, ttl: 6500 },
+            { x: 2680, y: 387, destination: 3020, ttl: 6000 },
+            { x: 4610, y: 387, destination: 4940, ttl: 6500 },
+        ],
+        checkpoints: [1540, 3250, 5760],
+        signs: [
+            { x: 210, text: 'ESCAPE THE FEED' },
+            { x: 2240, text: 'PLOT ARMOR ACTIVATED' },
+            { x: 4060, text: 'THE ALGORITHM IS WATCHING' },
+            { x: 6100, text: 'JUST ONE MORE VIDEO?' },
+        ],
+        phone: { x: 6380, y: 415 },
+        finish: 6740,
+        success: 'YOU ESCAPED THE ALGORITHM!',
+    },
+];
+/** Automated validation of map geometry, independent from Phaser. */
+function validateLevels() {
+    const errors = [];
+    for (const level of LEVELS) {
+        if (level.finish >= level.length)
+            errors.push(`Level ${level.id}: finish outside world`);
+        for (const [a, b] of level.ground)
+            if (a >= b)
+                errors.push(`Level ${level.id}: invalid ground`);
+        for (const position of level.checkpoints) {
+            if (!level.ground.some(([a, b]) => position > a + 36 && position < b - 36)) {
+                errors.push(`Level ${level.id}: checkpoint ${position} over pit`);
+            }
+        }
+        for (const portal of level.portals)
+            if (!level.ground.some(([a, b]) => portal.destination > a + 30 && portal.destination < b - 30)) {
+                errors.push(`Level ${level.id}: portal destination ${portal.destination} is unsafe`);
+            }
+        for (let i = 1; i < level.ground.length; i++) {
+            const gap = level.ground[i][0] - level.ground[i - 1][1];
+            if (gap > 155)
+                errors.push(`Level ${level.id}: gap ${gap} wider than normal jump`);
+        }
+    }
+    return errors;
+}
+
+const INK = '#332a50';
+const WHITE = '#fff9ee';
+const CREAM = '#fff2dc';
+const ORANGE = '#ff9e43';
+const VIOLET = '#a35bfa';
+function texture(scene, key, w, h, fn, scale = 2) {
+    const raw = document.createElement('canvas');
+    raw.width = w;
+    raw.height = h;
+    const c = raw.getContext('2d');
+    c.imageSmoothingEnabled = false;
+    fn(c, w, h);
+    const big = document.createElement('canvas');
+    big.width = w * scale;
+    big.height = h * scale;
+    const b = big.getContext('2d');
+    b.imageSmoothingEnabled = false;
+    b.drawImage(raw, 0, 0, big.width, big.height);
+    scene.textures.addCanvas(key, big);
+}
+const rect = (c, col, x, y, w, h) => {
+    c.fillStyle = col;
+    c.fillRect(x, y, w, h);
+};
+const point = (c, col, x, y) => rect(c, col, x, y, 1, 1);
+function oval(c, col, cx, cy, rx, ry) {
+    c.fillStyle = col;
+    for (let dy = -ry; dy <= ry; dy++) {
+        const half = Math.floor(rx * Math.sqrt(Math.max(0, 1 - dy * dy / (ry * ry))));
+        c.fillRect(cx - half, cy + dy, half * 2 + 1, 1);
+    }
+}
+function seeded(seed) {
+    let state = seed >>> 0;
+    return () => {
+        state = (state * 1664525 + 1013904223) >>> 0;
+        return state / 4294967296;
+    };
+}
+function duck(c, mode, f) {
+    const running = mode === 'run';
+    const jump = mode === 'jump' || mode === 'bounce';
+    const fall = mode === 'fall';
+    const phone = mode === 'phone';
+    const win = mode === 'victory';
+    const hurt = mode === 'hurt';
+    const bounce = Math.sin(f * 1.55) > 0;
+    const bob = running ? (f % 2) : win ? (f % 2) : 0;
+    const footA = running ? (bounce ? -3 : 2) : win ? -2 : 0;
+    const footB = running ? (bounce ? 3 : -2) : 0;
+    const blink = mode === 'idle' && f === 3;
+    const cY = phone ? 3 : bob;
+    // The tail and feet are deliberately oversized for character readability.
+    rect(c, INK, 5, 22 + cY, 8, 9);
+    rect(c, WHITE, 4, 21 + cY, 8, 8);
+    rect(c, INK, 9 + footA, 34 + cY, 8, 5);
+    rect(c, ORANGE, 10 + footA, 34 + cY, 8, 4);
+    rect(c, '#e97643', 10 + footA, 37 + cY, 9, 2);
+    rect(c, INK, 20 + footB, 34 + cY, 7, 5);
+    rect(c, ORANGE, 20 + footB, 34 + cY, 8, 4);
+    rect(c, '#e97643', 19 + footB, 37 + cY, 9, 2);
+    // Body and jersey.
+    oval(c, INK, 16, 27 + cY, 12, 11);
+    oval(c, WHITE, 16, 26 + cY, 11, 10);
+    rect(c, '#8b52db', 8, 27 + cY, 17, 6);
+    rect(c, VIOLET, 7, 24 + cY, 19, 8);
+    rect(c, '#cc9aff', 9, 24 + cY, 12, 2);
+    rect(c, '#2fc3bb', 10, 32 + cY, 16, 3);
+    rect(c, '#2888b4', 12, 34 + cY, 6, 2);
+    rect(c, INK, 17, 32 + cY, 2, 4);
+    // Wing movement.
+    if (jump || fall || win) {
+        rect(c, INK, 3, 17 + cY, 9, 5);
+        rect(c, WHITE, 4, 17 + cY, 9, 4);
+        rect(c, INK, 24, 19 + cY, 5, 8);
+        rect(c, WHITE, 24, 19 + cY, 4, 8);
+    }
+    else {
+        oval(c, INK, 8, 26 + cY + (running && bounce ? -2 : 0), 5, 6);
+        oval(c, WHITE, 8, 25 + cY + (running && bounce ? -2 : 0), 4, 5);
+        rect(c, CREAM, 7, 29 + cY, 3, 2);
+    }
+    // Big head with strong dark pixel outline.
+    oval(c, INK, 18, 13 + cY, 13, 12);
+    oval(c, WHITE, 18, 12 + cY, 12, 11);
+    rect(c, WHITE, 8, 20 + cY, 17, 4);
+    rect(c, INK, 11, cY, 4, 5);
+    rect(c, WHITE, 12, cY, 3, 5);
+    rect(c, INK, 17, 1 + cY, 4, 4);
+    rect(c, WHITE, 17, 1 + cY, 3, 4);
+    rect(c, '#e6eaff', 9, 7 + cY, 5, 2);
+    if (blink || hurt) {
+        rect(c, INK, 22, 11 + cY, 5, 2);
+    }
+    else if (phone) {
+        rect(c, INK, 23, 15 + cY, 3, 3);
+    }
+    else {
+        rect(c, INK, 22, 10 + cY, 5, 7);
+        rect(c, WHITE, 24, 11 + cY, 2, 2);
+    }
+    rect(c, '#ffc2d2', 16, 17 + cY, 5, 2);
+    // Beak and lower lip point to the right.
+    rect(c, INK, 25, 18 + cY, 7, 5);
+    rect(c, ORANGE, 25, 18 + cY, 7, 4);
+    rect(c, '#ffbc65', 28, 19 + cY, 4, 2);
+    rect(c, '#dc7042', 27, 22 + cY, 4, 2);
+    if (mode === 'bounce') {
+        rect(c, '#ffffff', 22, 8 + cY, 4, 2);
+    }
+    if (phone) {
+        rect(c, INK, 20, 26, 8, 12);
+        rect(c, '#6eeaff', 21, 27, 6, 9);
+        rect(c, '#ff90cd', 22, 28, 4, 3);
+        rect(c, WHITE, 23, 33, 2, 1);
+        rect(c, WHITE, 16, 31, 6, 3);
+    }
+    if (win) {
+        rect(c, INK, 20, 11 + cY, 9, 5);
+        rect(c, '#171634', 21, 12 + cY, 8, 4);
+        rect(c, '#ffffff', 21, 12 + cY, 3, 1);
+    }
+}
+function drawKernel(c, bad, frame) {
+    if (bad) {
+        oval(c, '#1cb9ff', 7, 8, 6 + (frame % 2), 7);
+        oval(c, '#344ac7', 7, 8, 5, 6);
+        oval(c, '#161126', 7, 8, 4, 5);
+        rect(c, '#6beaff', 5, 4, 2, 2);
+        rect(c, '#08071a', 8, 10, 2, 2);
+    }
+    else {
+        oval(c, '#ae621e', 6, 8, 5, 7);
+        oval(c, frame === 0 ? '#ffd355' : '#ffdf72', 6, 7, 4, 6);
+        rect(c, '#fff4b6', 4, 3, 2, 3);
+        rect(c, '#f9a934', 8, 10, 2, 2);
+        rect(c, '#fff9cf', 3, 6, 1, 2);
+    }
+}
+function spring(c, frame) {
+    const squash = frame === 1 ? 5 : 0;
+    // Foliage and curved cob, drawn horizontally like a trampoline.
+    rect(c, INK, 5, 20, 42, 5);
+    oval(c, '#287a53', 13, 18, 12, 6);
+    oval(c, '#39aa70', 37, 18, 13, 6);
+    for (let j = 0; j < 3; j++)
+        rect(c, '#73d796', 10 + j * 14, 16, 8, 4);
+    oval(c, INK, 26, 11 + squash / 2, 24, 11 - squash / 2);
+    oval(c, '#ef9b35', 26, 10 + squash / 2, 23, 10 - squash / 2);
+    oval(c, '#ffce4d', 26, 9 + squash / 2, 21, 9 - squash / 2);
+    for (let y = 3 + squash; y < 16; y += 4)
+        for (let x = 8; x < 45; x += 6) {
+            rect(c, ((x + y) % 3 === 0) ? '#ffe987' : '#f5b642', x, y, 4, 3);
+        }
+    rect(c, '#fff6bc', 13, 2 + squash, 21, 2);
+}
+function gull(c, f) {
+    const up = f === 0;
+    // Silly oversized seagull; deliberately animated wing silhouettes.
+    oval(c, INK, 16, 10, 11, 6);
+    oval(c, WHITE, 16, 9, 10, 5);
+    if (up) {
+        rect(c, INK, 3, 1, 9, 7);
+        rect(c, '#d4e1ed', 4, 2, 8, 5);
+        rect(c, INK, 20, 0, 9, 7);
+        rect(c, '#d4e1ed', 21, 1, 7, 5);
+    }
+    else {
+        rect(c, INK, 2, 11, 11, 6);
+        rect(c, '#d4e1ed', 3, 11, 9, 4);
+        rect(c, INK, 20, 11, 11, 6);
+        rect(c, '#d4e1ed', 21, 11, 9, 4);
+    }
+    rect(c, INK, 20, 4, 4, 4);
+    rect(c, '#ffffff', 20, 4, 3, 2);
+    rect(c, '#fabc62', 25, 9, 6, 3);
+    rect(c, INK, 12, 15, 2, 3);
+    rect(c, INK, 19, 15, 2, 3);
+    rect(c, '#ffb452', 12, 17, 4, 1);
+    rect(c, '#ffb452', 19, 17, 4, 1);
+}
+function post(c) {
+    rect(c, INK, 1, 24, 19, 5);
+    rect(c, '#484269', 3, 23, 15, 4);
+    rect(c, INK, 3, 0, 15, 25);
+    rect(c, '#a97bf3', 4, 1, 13, 22);
+    rect(c, '#e8b0fa', 6, 1, 3, 22);
+    rect(c, '#ffb777', 4, 6, 13, 5);
+    rect(c, '#ffcfaa', 5, 7, 11, 2);
+    rect(c, '#ffb777', 4, 18, 13, 3);
+    rect(c, INK, 7, 12, 3, 2);
+    rect(c, INK, 12, 12, 3, 2);
+    rect(c, INK, 9, 16, 4, 1);
+    rect(c, '#fff0d0', 7, 3, 7, 2);
+}
+function portal(c, f) {
+    const pulse = f === 1;
+    for (let y = 2; y < 44; y++) {
+        const r = Math.sqrt(Math.max(0, 1 - ((y - 22) / 21) ** 2));
+        const maxx = Math.round(r * 12);
+        for (let x = 13 - maxx; x <= 13 + maxx; x++) {
+            const edge = x - (13 - maxx) < 3 || (13 + maxx) - x < 3;
+            if (edge)
+                point(c, pulse ? '#87f9e7' : '#fc8ceb', x, y);
+            else
+                point(c, ((x + y) % 6 < 3) ? '#4339a8' : '#312873', x, y);
+        }
+    }
+    for (let i = 0; i < 9; i++) {
+        const x = (i * 7 + 3) % 23 + 2;
+        const y = (i * 11 + (pulse ? 4 : 0)) % 33 + 6;
+        rect(c, i % 2 ? '#8cfcf8' : '#fff2a8', x, y, 2, 2);
+    }
+    rect(c, '#fff9ff', 13, 0, 2, 3);
+}
+function phone(c, f) {
+    rect(c, '#e7b2ff', 1, 0, 15, 27);
+    rect(c, INK, 2, 0, 13, 27);
+    rect(c, '#8d5fe8', 3, 2, 11, 22);
+    rect(c, f % 2 ? '#fe7bad' : '#81f1ed', 4, 3, 9, 7);
+    rect(c, '#ffdb65', 5, 4, 3, 3);
+    rect(c, '#ffeff9', 4, 12, 9, 2);
+    rect(c, '#e6b8ff', 4, 17, 8, 2);
+    rect(c, '#faf8ff', 8, 25, 3, 1);
+    rect(c, '#fff9cd', 0, 7, 2, 3);
+}
+function flag(c) {
+    rect(c, INK, 5, 3, 4, 62);
+    rect(c, '#e9f0ff', 6, 3, 2, 62);
+    rect(c, '#c782f6', 9, 5, 26, 22);
+    rect(c, '#f7b3d7', 10, 6, 23, 18);
+    rect(c, '#6c48c8', 9, 24, 18, 3);
+    oval(c, '#eab045', 21, 15, 6, 8);
+    oval(c, '#ffe072', 21, 15, 5, 7);
+    rect(c, '#fff5cb', 19, 12, 2, 3);
+    rect(c, INK, 2, 64, 10, 2);
+}
+function grassBonus(c) {
+    rect(c, '#3a735c', 3, 15, 27, 6);
+    rect(c, '#69d49c', 1, 13, 30, 4);
+    rect(c, '#55bd7a', 4, 7, 5, 9);
+    rect(c, '#67e89e', 11, 4, 4, 12);
+    rect(c, '#3eb886', 19, 7, 4, 9);
+    rect(c, '#ff8bb4', 17, 3, 5, 5);
+    rect(c, '#fff9cc', 19, 5, 2, 2);
+    rect(c, '#fffad0', 5, 11, 3, 3);
+}
+function heart(c) {
+    rect(c, '#ffa0ba', 4, 4, 6, 5);
+    rect(c, '#ffa0ba', 13, 4, 6, 5);
+    rect(c, '#ff6597', 3, 7, 17, 7);
+    rect(c, '#ff6597', 6, 14, 11, 4);
+    rect(c, '#ff6597', 9, 18, 5, 3);
+    rect(c, '#ffe0ee', 6, 6, 3, 3);
+}
+function supportCorn(c) {
+    oval(c, INK, 12, 12, 9, 11);
+    oval(c, '#ffce4b', 12, 11, 8, 10);
+    rect(c, '#66ca86', 3, 16, 6, 8);
+    rect(c, '#51b97e', 15, 18, 7, 6);
+    rect(c, '#ffe996', 7, 3, 3, 3);
+    rect(c, '#ffe996', 13, 6, 3, 3);
+    rect(c, INK, 9, 10, 2, 2);
+    rect(c, INK, 15, 10, 2, 2);
+    rect(c, '#a45635', 11, 15, 4, 1);
+}
+function makeSky(scene, theme) {
+    texture(scene, `sky_${theme}`, 480, 270, (c, w, h) => {
+        const palettes = {
+            field: ['#a9dbef', '#b4e3eb', '#c8ebe5', '#dbf0d9', '#f9edcb'],
+            coast: ['#aeb4f5', '#b9b5f4', '#dfb8e4', '#fbd0d4', '#ffe2bb'],
+            neon: ['#171839', '#29214f', '#3c265e', '#60316f', '#953b89'],
+        };
+        for (let y = 0; y < h; y += 2) {
+            const i = Math.min(4, Math.floor((y / h) * 5));
+            rect(c, palettes[theme][i], 0, y, w, 2);
+        }
+        if (theme !== 'neon') {
+            oval(c, theme === 'field' ? '#ffe5a4' : '#ffbeaa', 388, 62, 30, 30);
+            oval(c, theme === 'field' ? '#fff4d6' : '#ffd9c6', 388, 59, 25, 25);
+        }
+        else {
+            oval(c, '#a946aa', 373, 86, 39, 39);
+            oval(c, '#fe92b0', 373, 83, 35, 35);
+            for (let y = 77; y < 125; y += 7)
+                rect(c, '#803582', 336, y, 77, Math.floor((y - 70) / 8));
+        }
+        const r = seeded(theme === 'field' ? 391 : theme === 'coast' ? 214 : 931);
+        if (theme === 'neon') {
+            for (let i = 0; i < 120; i++) {
+                const x = Math.floor(r() * w), y = Math.floor(r() * 145);
+                rect(c, r() > .72 ? '#f9d1ec' : '#8272bf', x, y, r() > .93 ? 2 : 1, 1);
+            }
+        }
+        else {
+            for (let i = 0; i < 9; i++) {
+                const x = Math.floor(r() * w), y = 18 + Math.floor(r() * 80);
+                const col = theme === 'field' ? '#f8fcf0' : '#fff2eb';
+                oval(c, col, x + 14, y + 8, 14, 8);
+                oval(c, col, x + 27, y + 10, 17, 7);
+                oval(c, col, x + 19, y + 4, 10, 9);
+            }
+        }
+    });
+    texture(scene, `back_${theme}`, 480, 270, (c, w) => {
+        const r = seeded(theme === 'field' ? 33 : theme === 'coast' ? 49 : 515);
+        if (theme === 'field') {
+            c.fillStyle = '#b0d99d';
+            c.beginPath();
+            c.moveTo(0, 207);
+            for (let x = 0; x <= w; x += 12)
+                c.lineTo(x, 175 - Math.sin(x / 54) * 19 - Math.sin(x / 107) * 15);
+            c.lineTo(w, 270);
+            c.lineTo(0, 270);
+            c.fill();
+            c.fillStyle = '#8bcb8c';
+            c.beginPath();
+            c.moveTo(0, 233);
+            for (let x = 0; x <= w; x += 10)
+                c.lineTo(x, 206 - Math.cos(x / 49) * 23);
+            c.lineTo(w, 270);
+            c.lineTo(0, 270);
+            c.fill();
+            for (let x = 10; x < 480; x += 27) {
+                rect(c, '#569c70', x, 195 + Math.sin(x) * 10, 2, 33);
+                rect(c, '#e9ba5d', x - 4, 191 + Math.sin(x) * 10, 8, 17);
+                rect(c, '#6ab67a', x - 7, 204 + Math.sin(x) * 10, 7, 4);
+            }
+        }
+        else if (theme === 'coast') {
+            rect(c, '#ffb1bc', 0, 173, w, 24);
+            rect(c, '#80c4e0', 0, 194, w, 76);
+            for (let i = 0; i < 38; i++) {
+                const x = Math.floor(r() * 480), y = 204 + Math.floor(r() * 64);
+                rect(c, i % 3 ? '#a6deef' : '#dff5ef', x, y, 7 + Math.floor(r() * 15), 1);
+            }
+            for (let i = 0; i < 14; i++) {
+                const x = i * 38 + Math.floor(r() * 10);
+                const height = 27 + Math.floor(r() * 25);
+                rect(c, '#ab9bc4', x, 193 - height, 25, height);
+                rect(c, '#efc8d4', x + 2, 194 - height, 21, 3);
+                for (let y = 200 - height; y < 190; y += 9)
+                    rect(c, '#ffebdf', x + 7, y, 3, 4);
+            }
+        }
+        else {
+            for (let i = 0; i < 32; i++) {
+                const x = i * 17;
+                const tall = 45 + Math.floor(r() * 78);
+                rect(c, i % 3 ? '#262347' : '#322550', x, 215 - tall, 16, tall + 60);
+                rect(c, '#9352a4', x, 215 - tall, 16, 2);
+                for (let y = 220 - tall; y < 215; y += 10) {
+                    if (r() > 0.3)
+                        rect(c, r() > .5 ? '#76eced' : '#ed79bf', x + 4, y, 3, 3);
+                }
+            }
+            rect(c, '#3c2765', 0, 220, 480, 50);
+            for (let x = 0; x < 480; x += 22)
+                rect(c, '#7844a0', x, 236, 10, 2);
+        }
+    });
+}
+function makeGround(scene, theme) {
+    texture(scene, `ground_${theme}`, 64, 64, (c, w, h) => {
+        const rng = seeded(theme === 'field' ? 101 : theme === 'coast' ? 202 : 303);
+        if (theme === 'field') {
+            rect(c, '#5b9b71', 0, 0, w, h);
+            rect(c, '#7cba78', 0, 0, w, 7);
+            rect(c, '#a9d77c', 0, 0, w, 3);
+            rect(c, '#95704b', 0, 10, w, h - 10);
+            rect(c, '#a67c51', 0, 10, w, 6);
+            for (let i = 0; i < 80; i++) {
+                const x = Math.floor(rng() * 64), y = 12 + Math.floor(rng() * 52);
+                rect(c, rng() > .5 ? '#c49456' : '#7d6748', x, y, 3 + Math.floor(rng() * 4), 2);
+            }
+            for (let x = 6; x < w; x += 13)
+                rect(c, '#3b9569', x, 2, 5, 4);
+        }
+        else if (theme === 'coast') {
+            rect(c, '#b593a6', 0, 0, w, h);
+            rect(c, '#f9d8bd', 0, 0, w, 8);
+            rect(c, '#ffe9cc', 0, 0, w, 3);
+            rect(c, '#e4b6a8', 0, 8, w, 58);
+            for (let y = 14; y < 64; y += 15) {
+                rect(c, '#c694a1', 0, y, 64, 2);
+                for (let x = y % 30 ? 19 : 0; x < w; x += 32)
+                    rect(c, '#c694a1', x, y + 1, 2, 14);
+            }
+            rect(c, '#f4c5b4', 0, 10, 64, 2);
+        }
+        else {
+            rect(c, '#221d47', 0, 0, w, h);
+            rect(c, '#bd6dd0', 0, 0, w, 5);
+            rect(c, '#71e8eb', 0, 0, w, 2);
+            rect(c, '#32275e', 0, 7, w, 57);
+            for (let x = 0; x < w; x += 16)
+                rect(c, '#4e397c', x, 7, 2, h - 7);
+            for (let y = 18; y < h; y += 15)
+                rect(c, '#4e397c', 0, y, w, 2);
+            for (let i = 0; i < 15; i++) {
+                const x = Math.floor(rng() * 64), y = 12 + Math.floor(rng() * 50);
+                rect(c, rng() > .5 ? '#ff80d5' : '#6df1e9', x, y, 3, 1);
+            }
+        }
+    });
+    texture(scene, `platform_${theme}`, 64, 15, (c, w, h) => {
+        const tile = theme === 'field' ? '#a87851' : theme === 'coast' ? '#d59caf' : '#453168';
+        const upper = theme === 'field' ? '#8dd384' : theme === 'coast' ? '#ffe2b9' : '#73e8ed';
+        rect(c, INK, 0, 3, w, h - 3);
+        rect(c, tile, 0, 5, w, h - 6);
+        rect(c, upper, 0, 0, w, 5);
+        rect(c, theme === 'neon' ? '#f287e4' : '#fff0c6', 0, 1, w, 1);
+        for (let x = 7; x < w; x += 19)
+            rect(c, '#554664', x, 9, 2, 2);
+    });
+}
+function generateArt(scene) {
+    const modes = ['idle', 'run', 'jump', 'fall', 'hurt', 'bounce', 'phone', 'victory'];
+    for (const mode of modes) {
+        const frames = mode === 'run' ? 6 : mode === 'idle' ? 4 : mode === 'victory' ? 4 : 1;
+        for (let f = 0; f < frames; f++) {
+            texture(scene, `duck_${mode}_${f}`, 34, 40, c => duck(c, mode, f));
+        }
+    }
+    for (let f = 0; f < 2; f++) {
+        texture(scene, `gold_${f}`, 13, 17, c => drawKernel(c, false, f));
+        texture(scene, `bad_${f}`, 15, 17, c => drawKernel(c, true, f));
+        texture(scene, `spring_${f}`, 52, 26, c => spring(c, f));
+        texture(scene, `gull_${f}`, 32, 19, c => gull(c, f));
+        texture(scene, `portal_${f}`, 28, 46, c => portal(c, f));
+        texture(scene, `phone_${f}`, 18, 28, c => phone(c, f));
+    }
+    texture(scene, 'bollard', 22, 30, c => post(c));
+    texture(scene, 'flag', 38, 67, c => flag(c));
+    texture(scene, 'grass', 32, 23, c => grassBonus(c));
+    texture(scene, 'heart', 24, 24, c => heart(c));
+    texture(scene, 'supportcorn', 24, 26, c => supportCorn(c));
+    texture(scene, 'focus', 24, 24, c => {
+        oval(c, '#674ac1', 12, 12, 11, 11);
+        oval(c, '#bb9cff', 12, 12, 9, 9);
+        rect(c, '#fff6da', 7, 6, 10, 12);
+        rect(c, '#aa6bd2', 9, 4, 6, 3);
+        rect(c, '#55508b', 5, 10, 14, 3);
+        rect(c, '#f3b1f3', 10, 17, 4, 2);
+    });
+    texture(scene, 'lore', 24, 24, c => {
+        oval(c, '#f0a1f0', 12, 12, 11, 11);
+        oval(c, '#a56fe8', 12, 12, 9, 9);
+        rect(c, '#fff9b9', 11, 4, 2, 16);
+        rect(c, '#fff9b9', 5, 11, 14, 2);
+        rect(c, '#fff9b9', 7, 7, 10, 10);
+        rect(c, '#9966d0', 9, 9, 6, 6);
+    });
+    texture(scene, 'checkpoint', 24, 42, c => {
+        rect(c, '#443c67', 4, 3, 3, 39);
+        rect(c, '#fef0d6', 5, 3, 1, 39);
+        rect(c, '#6de0c0', 7, 5, 15, 13);
+        rect(c, '#f8d3ef', 8, 7, 12, 9);
+        rect(c, '#ffbc5d', 11, 9, 5, 5);
+        rect(c, '#443c67', 2, 40, 11, 2);
+    });
+    texture(scene, 'flower', 15, 20, c => {
+        rect(c, '#459e7a', 7, 8, 2, 12);
+        rect(c, '#5bbb8d', 4, 13, 4, 2);
+        rect(c, '#ff8caf', 4, 3, 9, 8);
+        rect(c, '#ffe3ad', 6, 5, 5, 4);
+    });
+    for (const theme of ['field', 'coast', 'neon']) {
+        makeSky(scene, theme);
+        makeGround(scene, theme);
+    }
+}
+
+/** All sounds are synthesized in real time: no borrowed sound files or external assets. */
+class ChipAudio {
+    context = null;
+    lastStep = -1;
+    song = -1;
+    songTime = 0;
+    lastEvent = 0;
+    muted = false;
+    constructor() {
+        try {
+            this.muted = localStorage.getItem('duckexe-muted') === '1';
+        }
+        catch { /* private browsing */ }
+    }
+    unlock() {
+        try {
+            if (!this.context)
+                this.context = new AudioContext();
+            if (this.context.state === 'suspended')
+                void this.context.resume();
+        }
+        catch { /* WebAudio unavailable; gameplay is unaffected */ }
+    }
+    toggle() {
+        this.muted = !this.muted;
+        try {
+            localStorage.setItem('duckexe-muted', this.muted ? '1' : '0');
+        }
+        catch { /* ignore */ }
+        if (!this.muted)
+            this.unlock();
+        return this.muted;
+    }
+    tone(hz, length, volume, shape = 'square', delay = 0) {
+        if (!this.context || this.muted || !Number.isFinite(hz))
+            return;
+        const ctx = this.context;
+        const now = ctx.currentTime + delay;
+        try {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = shape;
+            osc.frequency.setValueAtTime(hz, now);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(volume, now + 0.009);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + length);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + length + 0.01);
+        }
+        catch { /* audio output may be unavailable */ }
+    }
+    fx(type) {
+        if (this.muted)
+            return;
+        const now = performance.now();
+        if (type === 'coin' && now - this.lastEvent < 46)
+            return;
+        this.lastEvent = now;
+        switch (type) {
+            case 'jump':
+                this.tone(420, .095, .044, 'square');
+                this.tone(560, .08, .025, 'sine', .055);
+                break;
+            case 'coin':
+                this.tone(790, .08, .045);
+                this.tone(1180, .13, .039, 'triangle', .065);
+                break;
+            case 'bad':
+                this.tone(195, .17, .045, 'sawtooth');
+                this.tone(133, .13, .028, 'square', .07);
+                break;
+            case 'bounce':
+                this.tone(360, .10, .035, 'triangle');
+                this.tone(620, .12, .045, 'square', .065);
+                this.tone(920, .13, .03, 'square', .12);
+                break;
+            case 'hit':
+                this.tone(240, .14, .05, 'sawtooth');
+                this.tone(110, .22, .05, 'triangle', .11);
+                break;
+            case 'gull':
+                this.tone(700, .12, .044, 'sawtooth');
+                this.tone(515, .19, .03, 'sawtooth', .085);
+                break;
+            case 'portal':
+                [392, 523, 659, 880, 1174].forEach((n, i) => this.tone(n, .16, .039, 'triangle', i * .08));
+                break;
+            case 'bonus':
+                [523, 659, 784, 1046].forEach((n, i) => this.tone(n, .14, .045, 'square', i * .065));
+                break;
+            case 'checkpoint':
+                [392, 523, 659].forEach((n, i) => this.tone(n, .14, .033, 'triangle', i * .075));
+                break;
+            case 'lose':
+                [392, 330, 262, 196].forEach((n, i) => this.tone(n, .24, .047, 'triangle', i * .16));
+                break;
+            case 'win':
+                [523, 659, 784, 1046, 784, 1046].forEach((n, i) => this.tone(n, .24, .047, 'square', i * .11));
+                break;
+            case 'phone':
+                this.tone(780, .19, .037, 'sine');
+                this.tone(980, .20, .027, 'sine', .11);
+                this.tone(660, .24, .026, 'sawtooth', .32);
+                break;
+        }
+    }
+    musicTick(deltaMs, level) {
+        if (this.muted || !this.context)
+            return;
+        if (this.song !== level) {
+            this.song = level;
+            this.songTime = 0;
+            this.lastStep = -1;
+        }
+        this.songTime += Math.min(deltaMs, 100);
+        const beat = level === 2 ? 158 : level === 1 ? 148 : 136;
+        const eighthMs = 60000 / beat / 2;
+        const stepAbsolute = Math.floor(this.songTime / eighthMs);
+        if (stepAbsolute === this.lastStep)
+            return;
+        this.lastStep = stepAbsolute;
+        const step = stepAbsolute % 32;
+        // Independent original melodies over a playful two-bar bass line.
+        const riffs = [
+            [72, 76, 79, 76, 74, 72, 69, -1, 72, 76, 81, 79, 76, 74, 72, -1,
+                76, 79, 84, 79, 76, 74, 72, -1, 74, 76, 79, 76, 72, 69, 67, -1],
+            [74, 77, 81, 77, 79, 77, 74, -1, 72, 74, 77, 81, 79, 77, 74, -1,
+                77, 81, 84, 81, 79, 77, 76, -1, 74, 77, 79, 77, 74, 72, 69, -1],
+            [69, 72, 76, 79, 76, 72, 69, -1, 68, 71, 75, 78, 75, 71, 68, -1,
+                72, 76, 79, 84, 79, 76, 72, -1, 71, 75, 78, 83, 78, 75, 71, -1],
+        ];
+        const midiToHz = (note) => 440 * 2 ** ((note - 69) / 12);
+        const melody = riffs[level][step];
+        if (melody > 0)
+            this.tone(midiToHz(melody), .10, .010, 'square');
+        if (step % 4 === 0) {
+            const bassRoots = level === 2 ? [45, 44, 41, 40] : level === 1 ? [50, 45, 48, 45] : [48, 45, 43, 45];
+            this.tone(midiToHz(bassRoots[Math.floor(step / 8) % 4]), .19, .015, 'triangle');
+        }
+        if (step % 8 === 4)
+            this.tone(125, .058, .008, 'triangle');
+    }
+    resetSong() { this.song = -1; }
+}
+
+class GameUI {
+    overlay = document.getElementById('overlay');
+    hud = document.getElementById('hud');
+    toastElement = document.getElementById('toast');
+    toastTimer = 0;
+    livesElement = document.getElementById('hud-lives');
+    scoreElement = document.getElementById('hud-score');
+    levelElement = document.getElementById('hud-level');
+    state = 'menu';
+    actions;
+    constructor(actions) {
+        this.actions = actions;
+        this.overlay.addEventListener('click', event => {
+            const target = event.target;
+            const button = target.closest('button[data-action]');
+            if (!button || button.disabled)
+                return;
+            const action = button.dataset.action;
+            if (action === 'start')
+                this.actions.start(Number(button.dataset.level ?? 0));
+            if (action === 'retry')
+                this.actions.retry();
+            if (action === 'next')
+                this.actions.next();
+            if (action === 'resume')
+                this.actions.resume();
+            if (action === 'menu')
+                this.actions.menu();
+        });
+        document.getElementById('pause-button').addEventListener('click', () => this.actions.pause());
+        document.getElementById('sound-button').addEventListener('click', () => this.actions.sound());
+    }
+    show(markup, center = false) {
+        this.overlay.innerHTML = markup;
+        this.overlay.className = `overlay ${center ? 'center-mode' : 'menu-mode'}`;
+        this.hud.hidden = !center;
+    }
+    showMenu(unlocked, best) {
+        this.state = 'menu';
+        const levels = LEVELS.map((spec, i) => `<button type="button" data-action="start" data-level="${i}" ${i > unlocked ? 'disabled' : ''}>
+      ${i > unlocked ? '◈ LOCKED' : `0${i + 1} ${spec.name}`}</button>`).join('');
+        this.show(`<div class="overlay-body">
+      <span class="pill-tag">✦ YOUR NEW FAVOURITE SIDE QUEST ✦</span>
+      <h1 class="big-title">DUCK<span class="period">.</span><span class="suffix">EXE</span></h1>
+      <div class="main-subtitle">NO MORE SCROLLING_</div>
+      <p class="menu-description">A tiny duck. A ridiculous amount of corn. Three levels of dodging birds, bad vibes and the algorithm.</p>
+      <button class="primary-button" type="button" data-action="start" data-level="0"><span>▶</span> START QUACKING <span>↗</span></button>
+      <div class="menu-meta"><span><em>♥</em> 3 LIVES</span><span><em>✳</em> 3 LEVELS</span><span>★ BEST ${best.toLocaleString('en-US')}</span></div>
+      <div class="level-buttons" aria-label="Unlocked levels">${levels}</div>
+    </div>`);
+    }
+    playing() {
+        this.state = 'playing';
+        this.overlay.className = 'overlay hidden';
+        this.overlay.innerHTML = '';
+        this.hud.hidden = false;
+    }
+    updateHUD(lives, score, level) {
+        this.livesElement.textContent = Array.from({ length: 3 }, (_, i) => i < lives ? '♥' : '♡').join(' ');
+        this.scoreElement.textContent = String(score).padStart(4, '0');
+        this.levelElement.textContent = `${String(level + 1).padStart(2, '0')} / 03`;
+    }
+    showPause(level) {
+        this.state = 'paused';
+        this.show(`<div class="center-card">
+      <div class="result-eyebrow">// SYSTEM ON HOLD</div>
+      <h2 class="result-title">PAUSE.EXE</h2>
+      <p class="result-message">Even main characters need a snack break.<br>Level ${level + 1} will be right here.</p>
+      <div class="result-actions"><button class="primary-button" data-action="resume">▶ RESUME</button><button class="secondary-button" data-action="menu">⌂ MENU</button></div>
+    </div>`, true);
+    }
+    showLevelClear(level, score, lives) {
+        this.state = 'level-clear';
+        this.show(`<div class="center-card">
+      <div class="result-eyebrow">✦ LEVEL ${level + 1} COMPLETE ✦</div>
+      <h2 class="result-title">${LEVELS[level].success}</h2>
+      <p class="result-message">That was extremely quack of you.<br>But the internet is not done with us yet.</p>
+      ${this.stats(score, lives)}
+      <div class="result-actions"><button class="primary-button" data-action="next">NEXT LEVEL ↗</button><button class="secondary-button" data-action="menu">⌂ MENU</button></div>
+    </div>`, true);
+    }
+    showGameOver(score, phone = false) {
+        this.state = 'lost';
+        this.show(`<div class="center-card">
+      <div class="result-eyebrow">// GAME OVER // </div>
+      <h2 class="result-title pink">${phone ? 'YOU GOT DOOMSCROLLED' : 'SKILL ISSUE?'}</h2>
+      <p class="result-message">${phone ? 'One little video turned into forever. The algorithm wins this round.' : 'The duck was brave. The obstacles were mean. Try again!'}</p>
+      ${this.stats(score, 0, phone)}
+      <div class="result-actions"><button class="primary-button" data-action="retry">↻ ONE MORE TRY?</button><button class="secondary-button" data-action="menu">⌂ MENU</button></div>
+    </div>`, true);
+    }
+    showVictory(score, lives, best) {
+        this.state = 'won';
+        this.show(`<div class="center-card">
+      <div class="result-eyebrow">✦ YOU ARE THE MAIN CHARACTER ✦</div>
+      <h2 class="result-title">YOU ESCAPED<br>THE ALGORITHM!</h2>
+      <p class="result-message">Go touch some grass. You earned it. 🦆</p>
+      ${this.stats(score, lives)}
+      <div class="result-stats"><span>★ PERSONAL BEST: <strong>${best}</strong></span></div>
+      <div class="result-actions"><button class="primary-button" data-action="retry">↻ PLAY AGAIN</button><button class="secondary-button" data-action="menu">⌂ MENU</button></div>
+    </div>`, true);
+    }
+    stats(score, lives, phone = false) {
+        return `<div class="result-stats"><span>✳ CORN: <strong>${score}</strong></span><span>♥ LIVES: <strong>${phone ? 'TRAPPED' : lives}</strong></span></div>`;
+    }
+    setSoundMuted(muted) {
+        const button = document.getElementById('sound-button');
+        button.textContent = muted ? '♫̸' : '♫';
+        button.setAttribute('aria-label', muted ? 'Turn sound on' : 'Mute sound');
+        button.setAttribute('aria-pressed', String(muted));
+    }
+    toast(text, ms = 1600) {
+        if (this.toastTimer)
+            clearTimeout(this.toastTimer);
+        this.toastElement.textContent = text;
+        this.toastElement.classList.add('visible');
+        this.toastTimer = window.setTimeout(() => this.toastElement.classList.remove('visible'), ms);
+    }
+    clearToast() {
+        if (this.toastTimer)
+            clearTimeout(this.toastTimer);
+        this.toastElement.classList.remove('visible');
+    }
+}
+
+const sprites = {};
+generateArt({ textures: { addCanvas(name, canvas) { sprites[name] = canvas; } } });
+const canvas = document.createElement('canvas');
+canvas.id = 'duck-game';
+canvas.width = 960; canvas.height = 540;
+canvas.style.width = '100%'; canvas.style.height = '100%';
+canvas.style.imageRendering = 'pixelated';
+document.getElementById('phaser-host').appendChild(canvas);
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const audio = new ChipAudio();
+const touch = { left: false, right: false, jump: false };
+const SAVE_KEY = 'duckexe-save-v1';
+let save = { unlocked: 0, best: 0 };
+try { const data = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); save.unlocked = Math.max(0, Math.min(2, Number(data.unlocked) || 0)); save.best = Math.max(0, Number(data.best) || 0); } catch {}
+const record = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch {} };
+const held = new Set();
+let level = 0, stage = null, hero = null, camera = 0, gameTime = 0, streak = 0, score = 0, lives = 3;
+let checkpoints = new Set(), checkpointX = 120, invUntil = 0, birdUntil = 0, focusUntil = 0, rizzUntil = 0;
+let lastJumpHeld = false, lastJump = -99, lastOnGround = 0, lastBounce = 0, cinematicAt = 0, lastTime = 0;
+const ui = new GameUI({
+  start(index) { newGame(index); }, retry() { newGame(0); },
+  next() { if (level < 2) initLevel(level+1); },
+  resume() { if (ui.state === 'paused') ui.playing(); },
+  pause() { pause(); }, menu() { menu(); }, sound() { ui.setSoundMuted(audio.toggle()); }
+});
+ui.setSoundMuted(audio.muted);
+ui.showMenu(save.unlocked, save.best);
+const img = (key,x,y,scale=1,mirror=false) => {
+  const tex=sprites[key]; if(!tex) return;
+  const dx=Math.round(x-(tex.width*scale)/2),dy=Math.round(y-(tex.height*scale)/2);
+  if(mirror){ctx.save();ctx.translate(Math.round(x),0);ctx.scale(-1,1);ctx.drawImage(tex,Math.round(-tex.width*scale/2),dy,Math.round(tex.width*scale),Math.round(tex.height*scale));ctx.restore();}
+  else ctx.drawImage(tex,dx,dy,Math.round(tex.width*scale),Math.round(tex.height*scale));
+};
+const worldImg=(key,x,y,scale=1,mirror=false)=>img(key,x-camera,y,scale,mirror);
+const showText=(x,y,text,color='#fff0cd',fontSize=14)=>{
+ ctx.font=`900 ${fontSize}px 'Courier New',monospace`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#352448';
+ ctx.strokeText(text,x-camera,y);ctx.fillStyle=color;ctx.fillText(text,x-camera,y);ctx.textAlign='left';
+};
+const hud=()=>ui.updateHUD(lives,score,level);
+function initLevel(index){
+ level=index;stage=LEVELS[level];hero={x:120,feet:GROUND_Y,vx:0,vy:0,face:1,ground:true};camera=0;gameTime=0;
+ lastJump=-99;lastOnGround=0;lastJumpHeld=false;cinematicAt=0;
+ invUntil=0;birdUntil=0;focusUntil=0;rizzUntil=0;lastBounce=0;checkpointX=120;checkpoints=new Set();
+ const clone=(a)=>a.map(o=>({...o,active:true,deadline:0,used:false}));
+ stage={...stage,gold:clone(stage.kernels),black:clone(stage.badKernels),springs:clone(stage.springs),bollards:clone(stage.bollards),gulls:clone(stage.gulls),bonuses:clone(stage.bonuses),portals:clone(stage.portals)};
+ ui.playing();hud();ui.toast(`LEVEL ${level+1} — ${stage.title}`,2200);audio.resetSong();
+}
+function newGame(index){score=0;lives=3;streak=0;audio.unlock();initLevel(Math.min(save.unlocked,index));}
+function menu(){stage=null;hero=null;camera=0;level=0;audio.resetSong();ui.showMenu(save.unlocked,save.best);ui.clearToast();}
+function pause(){if(ui.state==='playing'){ui.showPause(level)}else if(ui.state==='paused')ui.playing();}
+function float(x,y,text,col){ stage && stage.popups.push({x,y,text,col,t:gameTime}); }
+function pop(x,y,text,color='#fff3ad'){if(!stage.popups)stage.popups=[];float(x,y,text,color)}
+function finish(){
+ if(ui.state!=='playing')return;
+ save.best=Math.max(save.best,score);
+ if(level<2)save.unlocked=Math.max(save.unlocked,level+1);
+ record();audio.fx('win');ui.toast(stage.success,1100);
+ ui.state='clear-pending';
+ setTimeout(()=>{if(!stage || ui.state!=='clear-pending')return;if(level===2)ui.showVictory(score,lives,save.best);else ui.showLevelClear(level,score,lives);},650);
+}
+function hurt(fromPit=false){
+ if(ui.state!=='playing')return;
+ if(!fromPit&&gameTime<invUntil)return;
+ lives--;streak=0;audio.fx('hit');hud();
+ if(lives<=0){save.best=Math.max(save.best,score);record();audio.fx('lose');ui.showGameOver(score);return;}
+ invUntil=gameTime+2;birdUntil=gameTime+1.5;
+ hero.x=checkpointX;hero.feet=GROUND_Y;hero.vx=hero.vy=0;hero.ground=true;camera=Math.max(0,Math.min(stage.length-960,hero.x-300));
+ ui.toast('OUCH! -1 LIFE ♥',1100);
+}
+function bonus(item){
+ if(!item.active)return;item.active=false;audio.fx('bonus');
+ if(item.kind==='grass'||item.kind==='heart'){lives=Math.min(3,lives+1);pop(item.x,item.y-25,item.kind==='grass'?'TOUCH GRASS +1 LIFE':'SUPPORT CORN +1 LIFE','#b1ffd7');}
+ if(item.kind==='lore'){score+=50;pop(item.x,item.y-30,'YOU FOUND THE LORE +50','#f3a9ff');ui.toast('SIDE QUEST UNLOCKED',1500);}
+ if(item.kind==='focus'){focusUntil=gameTime+5;ui.toast('DO NOT DISTURB: 5 SECONDS',1600);}
+ hud();
+}
+function overlaps(x,y,rX=25,rY=45){return Math.abs(hero.x-x)<rX && Math.abs(hero.feet-33-y)<rY;}
+function step(dt){
+ if(ui.state!=='playing'||!hero)return;
+ gameTime+=dt;audio.musicTick(dt*1000,level);
+ const left=held.has('ArrowLeft')||held.has('KeyA')||touch.left;
+ const right=held.has('ArrowRight')||held.has('KeyD')||touch.right;
+ const axis=(right?1:0)-(left?1:0);
+ if(axis)hero.vx=Math.max(-310,Math.min(310,hero.vx+axis*1950*dt));
+ else if(hero.vx)hero.vx=Math.sign(hero.vx)*Math.max(0,Math.abs(hero.vx)-1800*dt);
+ const jump=held.has('ArrowUp')||held.has('KeyW')||held.has('Space')||touch.jump;
+ if(jump&&!lastJumpHeld)lastJump=gameTime;
+ if(gameTime-lastJump<.14&&gameTime-lastOnGround<.12){hero.vy=-565;hero.ground=false;lastOnGround=-99;lastJump=-99;audio.fx('jump');}
+ if(!jump&&lastJumpHeld&&hero.vy < -180)hero.vy*=.57;
+ lastJumpHeld=jump;
+ const prevFeet=hero.feet;
+ hero.x=Math.max(28,Math.min(stage.length-32,hero.x+hero.vx*dt));
+ hero.vy=Math.min(970,hero.vy+1450*dt);
+ hero.feet+=hero.vy*dt;
+ hero.ground=false;
+ // Springs take precedence over solid floors, but only when landed on from above.
+ for(const spr of stage.springs){
+   if(spr.active&&hero.vy>0&&gameTime-lastBounce>.18&&Math.abs(hero.x-spr.x)<49&&prevFeet<=spr.y-23&&hero.feet>=spr.y-23){
+     hero.feet=spr.y-23;hero.vy=-810;lastBounce=gameTime;audio.fx('bounce');pop(spr.x,spr.y-62,'BOING!');break;
+   }
+ }
+ if(hero.vy>=0){
+   let collisionY=Infinity;
+   for(const [start,end] of stage.ground){if(hero.x+13>start&&hero.x-13<end&&prevFeet<=GROUND_Y+6&&hero.feet>=GROUND_Y)collisionY=Math.min(collisionY,GROUND_Y);}
+   for(const platform of stage.platforms){let top=platform.y-13;
+     if(Math.abs(hero.x-platform.x)<platform.width/2+10&&prevFeet<=top+5&&hero.feet>=top)collisionY=Math.min(collisionY,top);
+   }
+   if(Number.isFinite(collisionY)){hero.feet=collisionY;hero.vy=0;hero.ground=true;lastOnGround=gameTime;}
+ }
+ if(hero.feet>650){hurt(true);return;}
+ for(const item of stage.gold){if(item.active&&overlaps(item.x,item.y,25,42)){
+   item.active=false;score+=10;streak++;audio.fx('coin');pop(item.x,item.y-21,'+10');
+   if(streak===10){rizzUntil=gameTime+2;ui.toast('UNLIMITED RIZZ ✦');}
+   hud();
+ }}
+ for(const item of stage.black){if(item.active&&overlaps(item.x,item.y,25,37)){
+   item.active=false;
+   if(gameTime>=focusUntil){score=Math.max(0,score-20);streak=0;audio.fx('bad');pop(item.x,item.y-22,'-20 BAD VIBES','#8ecbff');hud();}
+   else pop(item.x,item.y-22,'FOCUS MODE','#b6ffe1');
+ }}
+ for(const item of stage.bollards){if(item.active&&Math.abs(hero.x-item.x)<31&&hero.feet>item.y-29){hurt();break;}}
+ for(const gull of stage.gulls){
+   if(!gull.active)continue;
+   const phase=gameTime*gull.speed+stage.gulls.indexOf(gull)*1.31;
+   const gx=gull.x+Math.sin(phase)*gull.span,gy=gull.y+Math.sin(phase*1.28)*gull.altitude;
+   if(overlaps(gx,gy,44,43)){
+      if(gameTime<focusUntil){gull.active=false;pop(gx,gy,'NOT TODAY','#b6ffe1');}
+      else if(gameTime>=birdUntil){gull.active=false;birdUntil=gameTime+1.2;score=Math.max(0,score-15);streak=0;audio.fx('gull');pop(gx,gy-30,'MINE! -15','#ffc9a7');hud();}
+   }
+ }
+ for(const item of stage.bonuses)if(item.active&&overlaps(item.x,item.y,42,43))bonus(item);
+ for(const p of stage.portals){
+   if(!p.active)continue;
+   if(!p.deadline&&hero.x>p.x-420&&hero.x<p.x+100)p.deadline=gameTime+p.ttl/1000;
+   if(p.deadline&&gameTime>=p.deadline){p.active=false;continue;}
+   if(p.deadline&&overlaps(p.x,p.y,34,61)){
+      p.active=false;hero.x=p.destination;hero.feet=GROUND_Y;hero.vx=225;hero.vy=-135;
+      invUntil=gameTime+.5;score+=25;streak=0;audio.fx('portal');pop(hero.x,GROUND_Y-130,'SPEEDRUN HACK! +25','#9cfaf1');hud();
+   }
+ }
+ for(const x of stage.checkpoints){if(hero.x>x&&!checkpoints.has(x)){checkpointX=x+18;checkpoints.add(x);audio.fx('checkpoint');pop(x,GROUND_Y-120,'CHECKPOINT!','#b4ffe0');}}
+ if(stage.phone&&overlaps(stage.phone.x,stage.phone.y,27,55)){
+   ui.state='phone-pending';cinematicAt=gameTime;hero.x=stage.phone.x-33;hero.feet=GROUND_Y;hero.vx=hero.vy=0;
+   audio.fx('phone');ui.toast('...JUST ONE MORE VIDEO?',1600);
+   setTimeout(()=>{if(ui.state==='phone-pending'){save.best=Math.max(save.best,score);record();ui.showGameOver(score,true);}},1700);
+ }
+ if(hero.x>=stage.finish-17)finish();
+ camera+=((Math.max(0,Math.min(stage.length-960,hero.x-300)))-camera)*Math.min(1,dt*8.5);
+}
+function groundTile(start,end,theme){
+ const tex=sprites[`ground_${theme}`];
+ for(let x=start;x<end;x+=tex.width){const w=Math.min(tex.width,end-x);const screenX=x-camera;
+   if(screenX+w<0||screenX>960)continue;
+   ctx.drawImage(tex,0,0,w,Math.min(92,tex.height),Math.round(screenX),GROUND_Y,Math.ceil(w),92);
+ }
+}
+function platformTile(p,theme){
+ const tex=sprites[`platform_${theme}`],start=p.x-p.width/2;
+ for(let x=0;x<p.width;x+=tex.width){let w=Math.min(tex.width,p.width-x);let screenX=start+x-camera;
+   if(screenX+w<0||screenX>960)continue;
+   ctx.drawImage(tex,0,0,w,tex.height,Math.round(screenX),p.y-15,w,30);
+ }
+}
+function renderBackground(theme){
+ ctx.drawImage(sprites[`sky_${theme}`],0,0);
+ const tex=sprites[`back_${theme}`];const shift=(camera*.17)%tex.width;
+ for(let x=-shift;x<960;x+=tex.width)ctx.drawImage(tex,Math.round(x),0);
+}
+function render(){
+ const theme=stage?.theme||'field';renderBackground(theme);
+ if(!stage){
+  groundTile(0,960,'field');
+  img('spring_0',748,427,1.75);img('gold_0',856,320,1.5);img('gold_1',900,280,1.7);
+  img(`duck_idle_${Math.floor(performance.now()/270)%4}`,750,297+Math.sin(performance.now()/310)*7,3.2);
+  return;
+ }
+ for(const [start,end] of stage.ground)groundTile(start,end,theme);
+ for(const p of stage.platforms)platformTile(p,theme);
+ if(theme==='neon'){
+  for(let i=1;i<stage.ground.length;i++){
+    let a=stage.ground[i-1][1]-camera,b=stage.ground[i][0]-camera;
+    ctx.fillStyle='#8e4bb656';ctx.fillRect(a,GROUND_Y,b-a,92);
+    ctx.fillStyle='#88f5e8';ctx.fillRect(a,GROUND_Y,4,92);ctx.fillRect(b-4,GROUND_Y,4,92);
+  }
+ }
+ for(let x=225;x<stage.length;x+=285){
+  if(x<camera-50||x>camera+1050)continue;
+  if(stage.ground.some(([a,b])=>x>a+25&&x<b-25)){
+   if(theme==='field')worldImg('flower',x,GROUND_Y-9,.7);
+   if(theme==='neon'){ctx.fillStyle='#8b5dc4';ctx.fillRect(x-camera,GROUND_Y-47,4,45);ctx.fillStyle='#9cf7ed';ctx.fillRect(x-camera-4,GROUND_Y-50,13,5);}
+  }
+ }
+ for(const sign of stage.signs){
+   let x=sign.x-camera;if(x<-260||x>970)continue;
+   ctx.fillStyle='#2d234ce8';ctx.fillRect(x,334,252,38);ctx.strokeStyle=theme==='neon'?'#8cf9ee':'#ffdbb0';ctx.lineWidth=3;ctx.strokeRect(x,334,252,38);
+   ctx.fillStyle='#6e547f';ctx.fillRect(x+12,372,6,GROUND_Y-372);ctx.fillRect(x+232,372,6,GROUND_Y-372);
+   showText(sign.x+126,357,sign.text,'#fff2e2',12);
+ }
+ for(const x of stage.checkpoints){worldImg('checkpoint',x,GROUND_Y-41);showText(x,335,'CHECKPOINT',theme==='neon'?'#d6b2fe':'#536c8e',11);}
+ for(const x of stage.springs)if(Math.abs(x.x-camera)<1030)worldImg(`spring_${gameTime-lastBounce<.10&&Math.abs(hero.x-x.x)<45?1:0}`,x.x,x.y);
+ const beat=Math.floor(gameTime*4)%2;
+ for(const item of stage.gold)if(item.active&&Math.abs(item.x-camera)<1030)worldImg(`gold_${beat}`,item.x,item.y);
+ for(const item of stage.black)if(item.active&&Math.abs(item.x-camera)<1030)worldImg(`bad_${beat}`,item.x,item.y);
+ for(const item of stage.bollards)if(item.active&&Math.abs(item.x-camera)<1030)worldImg('bollard',item.x,item.y);
+ stage.gulls.forEach((g,i)=>{if(!g.active)return;const wave=gameTime*g.speed+i*1.31;
+  const gx=g.x+Math.sin(wave)*g.span,gy=g.y+Math.sin(wave*1.28)*g.altitude;
+  if(Math.abs(gx-camera)<1050)worldImg(`gull_${Math.floor(gameTime*5)%2}`,gx,gy,1,Math.cos(wave)>0);
+ });
+ for(const b of stage.bonuses)if(b.active)worldImg(({heart:'supportcorn',grass:'grass',lore:'lore',focus:'focus'})[b.kind],b.x,b.y);
+ for(const p of stage.portals){if(!p.active)continue;
+  const remaining=p.deadline?p.deadline-gameTime:9;
+  if(remaining<1.5&&Math.floor(gameTime*9)%2)continue;
+  worldImg(`portal_${beat}`,p.x,p.y);showText(p.x,p.y-67,'SPEEDRUN','#bafff3',11);
+ }
+ if(stage.phone){worldImg(`phone_${beat}`,stage.phone.x,stage.phone.y);showText(stage.phone.x,340,'JUST ONE MORE VIDEO?','#ffd2f1',15);}
+ worldImg('flag',stage.finish,GROUND_Y-66);
+ if(stage.popups){stage.popups=stage.popups.filter(p=>gameTime-p.t<.9);
+  for(const p of stage.popups){ctx.globalAlpha=Math.max(0,1-(gameTime-p.t)/.9);showText(p.x,p.y-(gameTime-p.t)*63,p.text,p.col,14);}ctx.globalAlpha=1;}
+ if(hero){
+  const grounded=hero.ground;
+  let sprite= 'duck_idle_'+(Math.floor(gameTime*4)%4);
+  if(ui.state==='phone-pending')sprite='duck_phone_0';
+  else if(!grounded)sprite=hero.vy<0?'duck_jump_0':'duck_fall_0';
+  else if(Math.abs(hero.vx)>30)sprite='duck_run_'+(Math.floor(gameTime*11)%6);
+  const invisible=gameTime<invUntil&&Math.floor(gameTime*12)%2===0;
+  ctx.globalAlpha=invisible?.42:1;
+  if(gameTime<rizzUntil){ctx.fillStyle='#ffda75a0';for(let k=0;k<5;k++)ctx.fillRect(hero.x-camera+Math.sin(gameTime*8+k)*39,hero.feet-30+Math.cos(gameTime*7+k)*38,5,5);}
+  if(gameTime<focusUntil){ctx.strokeStyle='#a3f7dd88';ctx.lineWidth=3;ctx.beginPath();ctx.arc(hero.x-camera,hero.feet-38,46,0,Math.PI*2);ctx.stroke();}
+  worldImg(sprite,hero.x,hero.feet-40,1,hero.face<0);
+  ctx.globalAlpha=1;
+  if(ui.state!=='phone-pending'&&hero.vx)hero.face=Math.sign(hero.vx);
+ }
+}
+let lastStamp=performance.now();
+function loop(stamp){const dt=Math.min(.035,(stamp-lastStamp)/1000||0);lastStamp=stamp;step(dt);render();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+for(const button of document.querySelectorAll('[data-control]')){
+ const control=button.dataset.control;
+ const clear=()=>{touch[control]=false;button.classList.remove('pressed')};
+ button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture(e.pointerId);touch[control]=true;button.classList.add('pressed');audio.unlock();});
+ button.addEventListener('pointerup',clear);button.addEventListener('pointercancel',clear);button.addEventListener('lostpointercapture',clear);
+}
+window.addEventListener('keydown',e=>{
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
+ if(!e.repeat&&(e.code==='Escape'||e.code==='KeyP'))pause();
+ if(!e.repeat&&e.code==='KeyR'&&ui.state==='lost')newGame(0);
+ held.add(e.code);
+});
+window.addEventListener('keyup',e=>held.delete(e.code));
+window.addEventListener('blur',()=>{held.clear();touch.left=touch.right=touch.jump=false;if(ui.state==='playing')pause()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&ui.state==='playing')pause()});
+
+</script>
+  </body>
+</html>
